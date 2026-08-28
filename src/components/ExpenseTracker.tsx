@@ -66,35 +66,41 @@ function ConfirmationDialog({
 }
 
 export function ExpenseTracker() {
-  const [expenses, setExpenses] = useState<Expense[]>(() => {
-    if (typeof window === "undefined") {
-      return [];
-    }
-
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (!saved) {
-        return [];
-      }
-
-      const parsed = JSON.parse(saved) as Expense[];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      window.localStorage.removeItem(STORAGE_KEY);
-      return [];
-    }
-  });
+  const [expenses, setExpenses] = useState<Expense[]>([]);
 
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const [pendingClear, setPendingClear] = useState(false);
   const [frequencyPercent, setFrequencyPercent] = useState(100);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+    if (typeof window === "undefined") {
+      return;
     }
-  }, [expenses]);
+
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Expense[];
+        if (Array.isArray(parsed)) {
+          setExpenses(parsed);
+        }
+      }
+    } catch {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } finally {
+      setIsHydrated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated || typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+  }, [expenses, isHydrated]);
 
   const quietLeak = useMemo(() => getQuietLeak(expenses), [expenses]);
 
@@ -247,7 +253,7 @@ export function ExpenseTracker() {
                 </div>
               </div>
 
-              {expenses.length > 0 ? (
+              {isHydrated && expenses.length > 0 ? (
                 <button
                   type="button"
                   onClick={() => setPendingClear(true)}
