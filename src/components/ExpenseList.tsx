@@ -17,7 +17,7 @@ export function ExpenseList({
   if (expenses.length === 0) {
     return (
       <div className="rounded-4xl border border-dashed border-stone-300 bg-stone-50 p-8 text-center">
-        <p className="text-2xl font-semibold tracking-[-0.06em] text-stone-900">Nothing suspicious yet.</p>
+        <p className="text-2xl font-semibold tracking-[-0.06em] text-stone-900">No cases opened yet.</p>
         <p className="mt-2 text-sm leading-6 text-stone-600">
           Add your first expense and we’ll start investigating.
         </p>
@@ -83,12 +83,12 @@ export function ExpenseList({
               <button
                 type="button"
                 onClick={() => onRemove(expense.id)}
-                aria-label={`Remove ${expense.name}`}
+                aria-label={`Close case for ${expense.name}`}
                 className={`mt-3 text-[0.65rem] font-medium uppercase tracking-[0.18em] transition ${
                   isSelected ? "text-stone-300 hover:text-stone-50" : "text-stone-500 hover:text-stone-900"
                 }`}
               >
-                Remove
+                Close case
               </button>
             </div>
           </div>

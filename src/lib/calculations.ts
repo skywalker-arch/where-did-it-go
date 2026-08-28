@@ -18,12 +18,34 @@ export interface WhatIfOutcome {
   amountReduction: number;
 }
 
+function compactNumber(value: number) {
+  const absolute = Math.abs(value);
+
+  if (absolute >= 1_000_000) {
+    const millions = absolute / 1_000_000;
+    const digits = millions >= 10 ? 1 : 2;
+    return `${millions.toLocaleString("en-KE", {
+      maximumFractionDigits: digits,
+      minimumFractionDigits: 0,
+    })}M`;
+  }
+
+  return value.toLocaleString("en-KE");
+}
+
 export function calculateMonthlyEstimate(amount: number, frequency: Expense["frequency"]) {
   return Math.round(amount * monthlyMultiplier[frequency]);
 }
 
 export function formatCurrency(value: number) {
-  return `KSh ${Math.max(0, Math.round(value)).toLocaleString("en-KE")}`;
+  const safeValue = Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+  const absolute = Math.abs(safeValue);
+
+  if (absolute >= 1_000_000) {
+    return `KSh ${compactNumber(safeValue)}`;
+  }
+
+  return `KSh ${safeValue.toLocaleString("en-KE")}`;
 }
 
 export function sortExpensesByMonthlyCost(expenses: Expense[]) {

@@ -2,10 +2,7 @@
 
 import { useId, useState } from "react";
 
-import {
-  calculateMonthlyEstimate,
-  formatCurrency,
-} from "@/lib/calculations";
+import { calculateMonthlyEstimate, formatCurrency } from "@/lib/calculations";
 import {
   CATEGORY_OPTIONS,
   FREQUENCY_OPTIONS,
@@ -16,6 +13,7 @@ import {
 
 interface ExpenseFormProps {
   onAdd: (values: ExpenseFormValues) => void;
+  isLimitReached: boolean;
 }
 
 const initialValues: ExpenseFormValues = {
@@ -25,7 +23,7 @@ const initialValues: ExpenseFormValues = {
   frequency: "Daily",
 };
 
-export function ExpenseForm({ onAdd }: ExpenseFormProps) {
+export function ExpenseForm({ onAdd, isLimitReached }: ExpenseFormProps) {
   const [values, setValues] = useState<ExpenseFormValues>(initialValues);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +57,11 @@ export function ExpenseForm({ onAdd }: ExpenseFormProps) {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (isLimitReached) {
+      setError("Your case files are full. Close an old case before opening a new one.");
+      return;
+    }
+
     const trimmed = values.name.trim();
 
     if (!trimmed) {
@@ -66,7 +69,7 @@ export function ExpenseForm({ onAdd }: ExpenseFormProps) {
       return;
     }
 
-    if (values.amount <= 0) {
+    if (values.amount <= 0 || !Number.isFinite(values.amount)) {
       setError("The amount needs to be more than KSh 0.");
       return;
     }
@@ -82,13 +85,13 @@ export function ExpenseForm({ onAdd }: ExpenseFormProps) {
     setError(null);
   };
 
-  const isSubmitDisabled = values.name.trim().length === 0 || values.amount <= 0;
+  const isSubmitDisabled = isLimitReached || values.name.trim().length === 0 || values.amount <= 0;
 
   return (
     <form
       onSubmit={handleSubmit}
       noValidate
-      className="space-y-4 rounded-[2rem] border border-stone-200 bg-stone-50/90 p-4 shadow-[0_12px_40px_rgba(28,25,23,0.04)] sm:p-5"
+      className="space-y-4 rounded-4xl border border-stone-200 bg-stone-50/90 p-4 shadow-[0_12px_40px_rgba(28,25,23,0.04)] sm:p-5"
       aria-label="Add a new expense"
     >
       <div className="space-y-2">
@@ -153,7 +156,7 @@ export function ExpenseForm({ onAdd }: ExpenseFormProps) {
               key={frequency}
               type="button"
               onClick={() => handleChange("frequency", frequency)}
-              className={`rounded-2xl border px-3 py-2 text-sm font-medium transition active:translate-y-[1px] ${
+              className={`rounded-2xl border px-3 py-2 text-sm font-medium transition active:translate-y-px ${
                 values.frequency === frequency
                   ? "border-stone-900 bg-stone-900 text-stone-50"
                   : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -171,6 +174,12 @@ export function ExpenseForm({ onAdd }: ExpenseFormProps) {
         <span className="font-semibold text-stone-900">{formatCurrency(previewMonthly)}</span>
       </div>
 
+      {isLimitReached ? (
+        <p className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Your case files are full. Close an old case before opening a new one.
+        </p>
+      ) : null}
+
       {error ? (
         <p className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700" role="alert">
           {error}
@@ -182,7 +191,7 @@ export function ExpenseForm({ onAdd }: ExpenseFormProps) {
         disabled={isSubmitDisabled}
         className="w-full rounded-2xl bg-stone-900 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-50 transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:bg-stone-300"
       >
-        Add expense
+        {isLimitReached ? "Case files full" : "Add expense"}
       </button>
     </form>
   );
