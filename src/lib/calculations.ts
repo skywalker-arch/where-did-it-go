@@ -18,6 +18,12 @@ export interface WhatIfOutcome {
   amountReduction: number;
 }
 
+export interface CategoryBreakdownEntry {
+  category: Category;
+  monthlyTotal: number;
+  shareOfTotal: number;
+}
+
 function compactNumber(value: number) {
   const absolute = Math.abs(value);
 
@@ -82,15 +88,11 @@ export function getWhatIfSavings(expense: Expense, adjustedAmount: number): What
   };
 }
 
-export function buildInsights(expenses: Expense[]) {
+export function getCategoryBreakdown(expenses: Expense[]): CategoryBreakdownEntry[] {
   if (expenses.length === 0) {
-    return [
-      "Nothing suspicious yet.",
-      "Add your first expense and we’ll start investigating.",
-    ];
+    return [];
   }
 
-  const quietLeak = getQuietLeak(expenses);
   const totalMonthly = expenses.reduce(
     (total, expense) => total + calculateMonthlyEstimate(expense.amount, expense.frequency),
     0,
@@ -113,9 +115,32 @@ export function buildInsights(expenses: Expense[]) {
     },
   );
 
-  const dominantCategory = (Object.entries(categoryTotals) as [Category, number][]).sort(
-    (left, right) => right[1] - left[1],
-  )[0];
+  return (Object.entries(categoryTotals) as [Category, number][])
+    .map(([category, monthlyTotal]) => ({
+      category,
+      monthlyTotal,
+      shareOfTotal: totalMonthly === 0 ? 0 : Math.round((monthlyTotal / totalMonthly) * 100),
+    }))
+    .filter((entry) => entry.monthlyTotal > 0)
+    .sort((left, right) => right.monthlyTotal - left.monthlyTotal);
+}
+
+export function buildInsights(expenses: Expense[]) {
+  if (expenses.length === 0) {
+    return [
+      "Nothing suspicious yet.",
+      "Add your first expense and we’ll start investigating.",
+    ];
+  }
+
+  const quietLeak = getQuietLeak(expenses);
+  const totalMonthly = expenses.reduce(
+    (total, expense) => total + calculateMonthlyEstimate(expense.amount, expense.frequency),
+    0,
+  );
+
+  const categoryBreakdown = getCategoryBreakdown(expenses);
+  const dominantCategory = categoryBreakdown[0] ?? null;
 
   const averageExpense =
     Math.round(
@@ -129,7 +154,7 @@ export function buildInsights(expenses: Expense[]) {
     : "Your spending is still spread out, so there is no single loud culprit yet.";
 
   const secondInsight = dominantCategory
-    ? `${dominantCategory[0]} is your strongest signal right now, adding roughly ${formatCurrency(dominantCategory[1])} to the monthly damage.`
+    ? `${dominantCategory.category} is your strongest signal right now, adding roughly ${formatCurrency(dominantCategory.monthlyTotal)} to the monthly damage.`
     : "Your spending is still spread out, so there is no dominant category yet.";
 
   const thirdInsight = quietLeak

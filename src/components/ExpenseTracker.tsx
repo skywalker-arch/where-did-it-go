@@ -8,6 +8,7 @@ import {
   buildInsights,
   calculateMonthlyEstimate,
   formatCurrency,
+  getCategoryBreakdown,
   getQuietLeak,
   sortExpensesByMonthlyCost,
 } from "@/lib/calculations";
@@ -128,6 +129,8 @@ export function ExpenseTracker() {
   );
 
   const suspects = useMemo(() => sortExpensesByMonthlyCost(expenses).slice(0, 3), [expenses]);
+  const categoryBreakdown = useMemo(() => getCategoryBreakdown(expenses), [expenses]);
+  const topCategory = categoryBreakdown[0] ?? null;
   const insights = useMemo(() => buildInsights(expenses), [expenses]);
 
   const whatIf = useMemo(() => {
@@ -241,7 +244,7 @@ export function ExpenseTracker() {
         }}
       >
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-          <header className="mb-6 rounded-4xl border border-stone-200 bg-stone-50/80 p-5 shadow-[0_12px_40px_rgba(28,25,23,0.04)] backdrop-blur-sm sm:p-7">
+          <header className="mb-6 rounded-[2rem] border border-stone-200 bg-stone-50/80 p-5 shadow-[0_18px_50px_rgba(28,25,23,0.06)] backdrop-blur-sm sm:p-7">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[0.72rem] font-semibold uppercase tracking-[0.42em] text-stone-500">
@@ -265,9 +268,38 @@ export function ExpenseTracker() {
               ) : null}
             </div>
 
-            <p className="mt-4 max-w-md text-sm text-stone-600">
+            <p className="mt-4 max-w-xl text-sm text-stone-600">
               Enter the habits. We’ll figure out what is quietly eating your month.
             </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-3xl border border-stone-200 bg-white/80 p-4">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-stone-500">Monthly damage</p>
+                <p className="mt-2 text-2xl font-semibold tracking-[-0.06em] text-stone-900">
+                  {expenses.length > 0 ? formatCurrency(totalMonthly) : "KSh 0"}
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-stone-200 bg-white/80 p-4">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-stone-500">Top leak</p>
+                <p className="mt-2 text-lg font-semibold text-stone-900">
+                  {quietLeak ? quietLeak.name : "No pattern yet"}
+                </p>
+                <p className="mt-1 text-sm text-stone-600">
+                  {quietLeak ? formatCurrency(quietLeak.monthlyEstimate) : "Add a few recurring spends"}
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-stone-200 bg-white/80 p-4">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-stone-500">Dominant category</p>
+                <p className="mt-2 text-lg font-semibold text-stone-900">
+                  {topCategory ? topCategory.category : "Awaiting data"}
+                </p>
+                <p className="mt-1 text-sm text-stone-600">
+                  {topCategory ? `${topCategory.shareOfTotal}% of your spend` : "We’ll spot the pattern soon"}
+                </p>
+              </div>
+            </div>
           </header>
 
           <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -460,6 +492,38 @@ export function ExpenseTracker() {
                         </button>
                       );
                     })}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-4xl border border-stone-200 bg-stone-50/80 p-5 shadow-[0_12px_40px_rgba(28,25,23,0.04)] sm:p-6">
+                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.32em] text-stone-500">
+                  Category breakdown
+                </p>
+
+                {categoryBreakdown.length === 0 ? (
+                  <p className="mt-4 text-sm text-stone-600">
+                    Add a few expenses to see which categories are pulling the most weight.
+                  </p>
+                ) : (
+                  <div className="mt-4 space-y-4">
+                    {categoryBreakdown.slice(0, 4).map((entry) => (
+                      <div key={entry.category} className="space-y-2">
+                        <div className="flex items-center justify-between gap-3 text-sm">
+                          <span className="font-medium text-stone-700">{entry.category}</span>
+                          <span className="font-semibold text-stone-900">{formatCurrency(entry.monthlyTotal)}</span>
+                        </div>
+                        <div className="h-2.5 overflow-hidden rounded-full bg-stone-200">
+                          <div
+                            className="h-full rounded-full bg-stone-900"
+                            style={{ width: `${Math.max(12, entry.shareOfTotal)}%` }}
+                          />
+                        </div>
+                        <p className="text-[0.7rem] uppercase tracking-[0.18em] text-stone-500">
+                          {entry.shareOfTotal}% of your monthly spend
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

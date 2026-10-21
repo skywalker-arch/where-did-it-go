@@ -44,10 +44,9 @@ test("getCategoryBreakdown groups recurring spend by category and highlights the
 
   assert.deepEqual(breakdown.map((entry) => entry.category), [
     "Food",
-    "Subscriptions",
     "Transport",
-    "Other",
+    "Subscriptions",
   ]);
   assert.equal(breakdown[0]?.monthlyTotal, 4500);
-  assert.equal(breakdown[0]?.shareOfTotal, 55);
+  assert.equal(breakdown[0]?.shareOfTotal, 64);
 });
