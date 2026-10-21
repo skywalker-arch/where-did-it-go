@@ -84,6 +84,7 @@ export function ExpenseTracker() {
       if (saved) {
         const parsed = JSON.parse(saved) as Expense[];
         if (Array.isArray(parsed)) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setExpenses(parsed);
         }
       }
