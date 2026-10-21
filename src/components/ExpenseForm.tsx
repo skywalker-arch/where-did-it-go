@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import { calculateMonthlyEstimate, formatCurrency } from "@/lib/calculations";
 import {
@@ -13,19 +13,36 @@ import {
 
 interface ExpenseFormProps {
   onAdd: (values: ExpenseFormValues) => void;
-  isLimitReached: boolean;
+  isLimitReached?: boolean;
+  initialValues?: Partial<ExpenseFormValues>;
+  submitLabel?: string;
+  onCancel?: () => void;
 }
 
-const initialValues: ExpenseFormValues = {
+const defaultValues: ExpenseFormValues = {
   name: "",
   amount: 0,
   category: "Food",
   frequency: "Daily",
 };
 
-export function ExpenseForm({ onAdd, isLimitReached }: ExpenseFormProps) {
-  const [values, setValues] = useState<ExpenseFormValues>(initialValues);
+export function ExpenseForm({
+  onAdd,
+  isLimitReached = false,
+  initialValues,
+  submitLabel = "Add expense",
+  onCancel,
+}: ExpenseFormProps) {
+  const [values, setValues] = useState<ExpenseFormValues>({
+    ...defaultValues,
+    ...initialValues,
+  });
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setValues({ ...defaultValues, ...initialValues });
+    setError(null);
+  }, [initialValues]);
 
   const nameId = useId();
   const amountId = useId();
@@ -81,11 +98,19 @@ export function ExpenseForm({ onAdd, isLimitReached }: ExpenseFormProps) {
       frequency: values.frequency,
     });
 
-    setValues(initialValues);
+    if (!initialValues) {
+      setValues(defaultValues);
+    }
     setError(null);
   };
 
   const isSubmitDisabled = isLimitReached || values.name.trim().length === 0 || values.amount <= 0;
+
+  const handleReset = () => {
+    setValues({ ...defaultValues, ...initialValues });
+    setError(null);
+    onCancel?.();
+  };
 
   return (
     <form
@@ -186,13 +211,25 @@ export function ExpenseForm({ onAdd, isLimitReached }: ExpenseFormProps) {
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={isSubmitDisabled}
-        className="w-full rounded-2xl bg-stone-900 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-50 transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:bg-stone-300"
-      >
-        {isLimitReached ? "Case files full" : "Add expense"}
-      </button>
+      <div className="flex gap-3">
+        {onCancel ? (
+          <button
+            type="button"
+            onClick={handleReset}
+            className="flex-1 rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:border-stone-300"
+          >
+            Cancel
+          </button>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={isSubmitDisabled}
+          className={`rounded-2xl bg-stone-900 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-50 transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:bg-stone-300 ${onCancel ? "flex-1" : "w-full"}`}
+        >
+          {isLimitReached ? "Case files full" : submitLabel}
+        </button>
+      </div>
     </form>
   );
 }

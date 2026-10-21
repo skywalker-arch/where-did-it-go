@@ -4,6 +4,7 @@ import type { Expense } from "@/types/expense";
 interface ExpenseListProps {
   expenses: Expense[];
   onRemove: (id: string) => void;
+  onEdit: (id: string) => void;
   onSelect?: (id: string) => void;
   selectedExpenseId?: string | null;
 }
@@ -11,6 +12,7 @@ interface ExpenseListProps {
 export function ExpenseList({
   expenses,
   onRemove,
+  onEdit,
   onSelect,
   selectedExpenseId,
 }: ExpenseListProps) {
@@ -80,16 +82,28 @@ export function ExpenseList({
               <p className={`mt-1 text-[0.7rem] uppercase tracking-[0.14em] ${isSelected ? "text-stone-300" : "text-stone-500"}`}>
                 / month
               </p>
-              <button
-                type="button"
-                onClick={() => onRemove(expense.id)}
-                aria-label={`Close case for ${expense.name}`}
-                className={`mt-3 text-[0.65rem] font-medium uppercase tracking-[0.18em] transition ${
-                  isSelected ? "text-stone-300 hover:text-stone-50" : "text-stone-500 hover:text-stone-900"
-                }`}
-              >
-                Close case
-              </button>
+              <div className="mt-3 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => onEdit(expense.id)}
+                  aria-label={`Edit ${expense.name}`}
+                  className={`text-[0.65rem] font-medium uppercase tracking-[0.18em] transition ${
+                    isSelected ? "text-stone-300 hover:text-stone-50" : "text-stone-500 hover:text-stone-900"
+                  }`}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRemove(expense.id)}
+                  aria-label={`Close case for ${expense.name}`}
+                  className={`text-[0.65rem] font-medium uppercase tracking-[0.18em] transition ${
+                    isSelected ? "text-stone-300 hover:text-stone-50" : "text-stone-500 hover:text-stone-900"
+                  }`}
+                >
+                  Close case
+                </button>
+              </div>
             </div>
           </div>
         );

@@ -88,6 +88,16 @@ export function getWhatIfSavings(expense: Expense, adjustedAmount: number): What
   };
 }
 
+export function updateExpense(
+  expenses: Expense[],
+  id: string,
+  updates: Partial<Expense>,
+): Expense[] {
+  return expenses.map((expense) =>
+    expense.id === id ? { ...expense, ...updates, id } : expense,
+  );
+}
+
 export function getCategoryBreakdown(expenses: Expense[]): CategoryBreakdownEntry[] {
   if (expenses.length === 0) {
     return [];

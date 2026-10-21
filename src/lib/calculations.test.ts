@@ -7,6 +7,7 @@ import {
   getCategoryBreakdown,
   getQuietLeak,
   getWhatIfSavings,
+  updateExpense,
 } from "./calculations.ts";
 
 const sampleExpenses: Expense[] = [
@@ -49,4 +50,17 @@ test("getCategoryBreakdown groups recurring spend by category and highlights the
   ]);
   assert.equal(breakdown[0]?.monthlyTotal, 4500);
   assert.equal(breakdown[0]?.shareOfTotal, 64);
+});
+
+test("updateExpense replaces the matching expense while keeping the rest intact", () => {
+  const updated = updateExpense(sampleExpenses, "2", {
+    ...sampleExpenses[1],
+    amount: 90,
+    frequency: "Weekly",
+  });
+
+  assert.equal(updated[1]?.amount, 90);
+  assert.equal(updated[1]?.frequency, "Weekly");
+  assert.equal(updated[0]?.name, "Coffee");
+  assert.equal(updated.length, sampleExpenses.length);
 });

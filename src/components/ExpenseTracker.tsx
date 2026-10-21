@@ -11,6 +11,7 @@ import {
   getCategoryBreakdown,
   getQuietLeak,
   sortExpensesByMonthlyCost,
+  updateExpense,
 } from "@/lib/calculations";
 import type { Expense, ExpenseFormValues } from "@/types/expense";
 
@@ -70,6 +71,7 @@ export function ExpenseTracker() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const [pendingClear, setPendingClear] = useState(false);
   const [frequencyPercent, setFrequencyPercent] = useState(100);
@@ -150,6 +152,10 @@ export function ExpenseTracker() {
   }, [frequencyPercent, selectedExpense]);
 
   const canAddExpense = expenses.length < MAX_EXPENSES;
+  const editingExpense = useMemo(
+    () => expenses.find((expense) => expense.id === editingExpenseId) ?? null,
+    [editingExpenseId, expenses],
+  );
 
   const handleSelectExpense = (id: string) => {
     setSelectedExpenseId(id);
@@ -176,6 +182,13 @@ export function ExpenseTracker() {
       setFrequencyPercent(100);
       return updated;
     });
+  };
+
+  const handleEditExpense = (id: string, values: ExpenseFormValues) => {
+    setExpenses((current) => updateExpense(current, id, values));
+    setEditingExpenseId(null);
+    setSelectedExpenseId(id);
+    setFrequencyPercent(100);
   };
 
   const handleConfirmRemove = () => {
@@ -304,7 +317,42 @@ export function ExpenseTracker() {
 
           <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
             <section className="space-y-6">
-              <ExpenseForm onAdd={handleAddExpense} isLimitReached={!canAddExpense} />
+              {editingExpense ? (
+                <div className="rounded-4xl border border-stone-200 bg-stone-50/90 p-4 shadow-[0_12px_40px_rgba(28,25,23,0.04)] sm:p-5">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-stone-500">
+                        Edit case
+                      </p>
+                      <h2 className="mt-1 text-xl font-semibold tracking-[-0.06em] text-stone-900">
+                        Update this expense
+                      </h2>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditingExpenseId(null)}
+                      className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-stone-700"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+
+                  <ExpenseForm
+                    onAdd={(values) => handleEditExpense(editingExpense.id, values)}
+                    isLimitReached={false}
+                    initialValues={{
+                      name: editingExpense.name,
+                      amount: editingExpense.amount,
+                      category: editingExpense.category,
+                      frequency: editingExpense.frequency,
+                    }}
+                    submitLabel="Save changes"
+                    onCancel={() => setEditingExpenseId(null)}
+                  />
+                </div>
+              ) : (
+                <ExpenseForm onAdd={handleAddExpense} isLimitReached={!canAddExpense} />
+              )}
 
               <div className="rounded-4xl border border-stone-200 bg-stone-50/80 p-4 shadow-[0_12px_40px_rgba(28,25,23,0.04)] sm:p-5">
                 <div className="mb-4 flex items-center justify-between gap-3">
@@ -324,6 +372,7 @@ export function ExpenseTracker() {
                 <ExpenseList
                   expenses={expenses}
                   onRemove={(id) => setPendingRemovalId(id)}
+                  onEdit={(id) => setEditingExpenseId(id)}
                   onSelect={handleSelectExpense}
                   selectedExpenseId={selectedExpense?.id ?? null}
                 />
